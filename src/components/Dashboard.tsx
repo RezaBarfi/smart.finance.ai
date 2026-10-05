@@ -4,16 +4,17 @@ import { useFinance, aggregateTotals, DEFAULT_ALLOC, AllocPcts } from '../lib/us
 import { supabase, TxRow, MonthRow, IncomeEntry } from '../lib/supabase'
 import { formatToman, toFaDigits, monthLabel, PERSIAN_MONTHS, compoundInterest, pctOf, gregorianToJalaliString, jalaliToISODate, todayJalaliYMD, jalaliMonthDays } from '../lib/format'
 import { Modal, StatCard, ProgressBar, Spinner } from './ui'
-import { Wallet, TrendingUp, TrendingDown, PiggyBank, Plus, Trash2, LogOut, ChevronDown, Sun, Moon, Settings, FileSpreadsheet, Calendar } from 'lucide-react'
+import { Wallet, TrendingUp, TrendingDown, PiggyBank, Plus, Trash2, LogOut, ChevronDown, Sun, Moon, Settings, FileSpreadsheet, Globe, KeyRound } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { useTheme } from '../lib/theme'
+import { useI18n } from '../lib/i18n'
 import * as XLSX from 'xlsx'
 import clsx from 'clsx'
 
 const CAT_META = {
-  invest: { label: 'سرمایه‌گذاری', color: '#10b981', bg: 'bg-emerald-500', soft: 'bg-emerald-50 text-emerald-700', darkSoft: 'dark:bg-emerald-950/50 dark:text-emerald-400', icon: TrendingUp },
-  expense: { label: 'هزینه‌ها', color: '#ef4444', bg: 'bg-rose-500', soft: 'bg-rose-50 text-rose-700', darkSoft: 'dark:bg-rose-950/50 dark:text-rose-400', icon: TrendingDown },
-  save: { label: 'پس‌انداز', color: '#f59e0b', bg: 'bg-amber-500', soft: 'bg-amber-50 text-amber-700', darkSoft: 'dark:bg-amber-950/50 dark:text-amber-400', icon: PiggyBank },
+  invest: { fa: 'سرمایه‌گذاری', en: 'Investment', color: '#10b981', bg: 'bg-emerald-500', soft: 'bg-emerald-50 text-emerald-700', darkSoft: 'dark:bg-emerald-950/50 dark:text-emerald-400', icon: TrendingUp },
+  expense: { fa: 'هزینه‌ها', en: 'Expenses', color: '#ef4444', bg: 'bg-rose-500', soft: 'bg-rose-50 text-rose-700', darkSoft: 'dark:bg-rose-950/50 dark:text-rose-400', icon: TrendingDown },
+  save: { fa: 'پس‌انداز', en: 'Savings', color: '#f59e0b', bg: 'bg-amber-500', soft: 'bg-amber-50 text-amber-700', darkSoft: 'dark:bg-amber-950/50 dark:text-amber-400', icon: PiggyBank },
 } as const
 
 type CatKey = keyof typeof CAT_META
@@ -23,6 +24,7 @@ const YEAR_RANGE = Array.from({ length: 1420 - 1405 + 1 }, (_, i) => 1405 + i)
 export function Dashboard() {
   const auth = useAuth()
   const { theme, toggle } = useTheme()
+  const { t, lang, setLang } = useI18n()
   const f = useFinance()
   const [incomeModal, setIncomeModal] = useState(false)
   const [txModal, setTxModal] = useState<CatKey | null>(null)
@@ -31,6 +33,8 @@ export function Dashboard() {
   const [allMonths, setAllMonths] = useState<MonthRow[]>([])
   const [allEntries, setAllEntries] = useState<IncomeEntry[]>([])
   const [compOpen, setCompOpen] = useState(false)
+
+  const catLabel = (k: CatKey) => lang === 'fa' ? CAT_META[k].fa : CAT_META[k].en
 
   useEffect(() => {
     let active = true
@@ -46,9 +50,9 @@ export function Dashboard() {
   const totals = aggregateTotals(allMonths, allTxs)
 
   const allocData = [
-    { name: `سرمایه‌گذاری (${toFaDigits(f.alloc.invest)}٪)`, value: f.budgets.invest, color: CAT_META.invest.color },
-    { name: `هزینه‌ها (${toFaDigits(f.alloc.expense)}٪)`, value: f.budgets.expense, color: CAT_META.expense.color },
-    { name: `پس‌انداز (${toFaDigits(f.alloc.save)}٪)`, value: f.budgets.save, color: CAT_META.save.color },
+    { name: `${catLabel('invest')} (${toFaDigits(f.alloc.invest)}٪)`, value: f.budgets.invest, color: CAT_META.invest.color },
+    { name: `${catLabel('expense')} (${toFaDigits(f.alloc.expense)}٪)`, value: f.budgets.expense, color: CAT_META.expense.color },
+    { name: `${catLabel('save')} (${toFaDigits(f.alloc.save)}٪)`, value: f.budgets.save, color: CAT_META.save.color },
   ].filter(d => d.value > 0)
 
   const trendData = useMemo(() => {
@@ -59,13 +63,13 @@ export function Dashboard() {
         const mTxs = allTxs.filter(t => t.month_id === m.id)
         return {
           label: monthLabel(m.year, m.month).split(' ')[0],
-          درآمد: Number(m.income),
-          سرمایه‌گذاری: mTxs.filter(t => t.category==='invest').reduce((s,t)=>s+Number(t.amount),0),
-          هزینه: mTxs.filter(t => t.category==='expense').reduce((s,t)=>s+Number(t.amount),0),
-          پس‌انداز: mTxs.filter(t => t.category==='save').reduce((s,t)=>s+Number(t.amount),0),
+          [lang === 'fa' ? 'درآمد' : 'Income']: Number(m.income),
+          [lang === 'fa' ? 'سرمایه‌گذاری' : 'Invest']: mTxs.filter(t => t.category==='invest').reduce((s,t)=>s+Number(t.amount),0),
+          [lang === 'fa' ? 'هزینه' : 'Expense']: mTxs.filter(t => t.category==='expense').reduce((s,t)=>s+Number(t.amount),0),
+          [lang === 'fa' ? 'پس‌انداز' : 'Save']: mTxs.filter(t => t.category==='save').reduce((s,t)=>s+Number(t.amount),0),
         }
       })
-  }, [allMonths, allTxs])
+  }, [allMonths, allTxs, lang])
 
   const netWorthData = useMemo(() => {
     let cum = 0
@@ -75,55 +79,42 @@ export function Dashboard() {
         const mTxs = allTxs.filter(t => t.month_id === m.id)
         cum += mTxs.filter(t => t.category==='invest').reduce((s,t)=>s+Number(t.amount),0)
         cum += mTxs.filter(t => t.category==='save').reduce((s,t)=>s+Number(t.amount),0)
-        return { label: monthLabel(m.year, m.month), ارزش: cum }
+        return { label: monthLabel(m.year, m.month), [lang === 'fa' ? 'ارزش' : 'Value']: cum }
       })
-  }, [allMonths, allTxs])
+  }, [allMonths, allTxs, lang])
 
   const exportExcel = () => {
     const monthMap = new Map(allMonths.map(m => [m.id, m]))
     const entryRows = allEntries.map(e => {
       const m = monthMap.get(e.month_id)
       return {
-        'سال': m?.year ?? '',
-        'ماه': m ? PERSIAN_MONTHS[m.month - 1] : '',
-        'مبلغ درآمد': Number(e.amount),
-        'تاریخ واریز': gregorianToJalaliString(e.income_date),
-        '٪ سرمایه‌گذاری': e.alloc_invest,
-        '٪ هزینه‌ها': e.alloc_expense,
-        '٪ پس‌انداز': e.alloc_save,
+        'سال': m?.year ?? '', 'ماه': m ? PERSIAN_MONTHS[m.month - 1] : '',
+        'مبلغ درآمد': Number(e.amount), 'تاریخ واریز': gregorianToJalaliString(e.income_date),
+        '٪ سرمایه‌گذاری': e.alloc_invest, '٪ هزینه‌ها': e.alloc_expense, '٪ پس‌انداز': e.alloc_save,
         'یادداشت': e.note ?? '',
       }
     })
-    const txRows = allTxs.map(t => {
-      const m = monthMap.get(t.month_id)
+    const txRows = allTxs.map(tx => {
+      const m = monthMap.get(tx.month_id)
       return {
-        'سال': m?.year ?? '',
-        'ماه': m ? PERSIAN_MONTHS[m.month - 1] : '',
-        'دسته': CAT_META[t.category as CatKey]?.label ?? t.category,
-        'نوع': t.sub_type ?? '',
-        'مبلغ': Number(t.amount),
-        'یادداشت': t.note ?? '',
-        'تاریخ تراکنش': gregorianToJalaliString(t.date),
+        'سال': m?.year ?? '', 'ماه': m ? PERSIAN_MONTHS[m.month - 1] : '',
+        'دسته': CAT_META[tx.category as CatKey]?.fa ?? tx.category, 'نوع': tx.sub_type ?? '',
+        'مبلغ': Number(tx.amount), 'یادداشت': tx.note ?? '', 'تاریخ تراکنش': gregorianToJalaliString(tx.date),
       }
     })
     const summary = allMonths.map(m => {
-      const mTxs = allTxs.filter(t => t.month_id === m.id)
+      const mTxs = allTxs.filter(tx => tx.month_id === m.id)
       const mEntries = allEntries.filter(e => e.month_id === m.id)
       const mIncome = mEntries.reduce((s,e) => s + Number(e.amount), 0)
       const bInv = mEntries.reduce((s,e) => s + (Number(e.amount) * e.alloc_invest) / 100, 0)
       const bExp = mEntries.reduce((s,e) => s + (Number(e.amount) * e.alloc_expense) / 100, 0)
       const bSave = mEntries.reduce((s,e) => s + (Number(e.amount) * e.alloc_save) / 100, 0)
       return {
-        'سال': m.year,
-        'ماه': PERSIAN_MONTHS[m.month - 1],
-        'درآمد کل': mIncome,
-        'تعداد ثبت درآمد': mEntries.length,
-        'سقف سرمایه‌گذاری': bInv,
-        'سقف هزینه‌ها': bExp,
-        'سقف پس‌انداز': bSave,
-        'مصرف سرمایه‌گذاری': mTxs.filter(t => t.category==='invest').reduce((s,t)=>s+Number(t.amount),0),
-        'مصرف هزینه‌ها': mTxs.filter(t => t.category==='expense').reduce((s,t)=>s+Number(t.amount),0),
-        'مصرف پس‌انداز': mTxs.filter(t => t.category==='save').reduce((s,t)=>s+Number(t.amount),0),
+        'سال': m.year, 'ماه': PERSIAN_MONTHS[m.month - 1], 'درآمد کل': mIncome, 'تعداد ثبت درآمد': mEntries.length,
+        'سقف سرمایه‌گذاری': bInv, 'سقف هزینه‌ها': bExp, 'سقف پس‌انداز': bSave,
+        'مصرف سرمایه‌گذاری': mTxs.filter(tx => tx.category==='invest').reduce((s,tx)=>s+Number(tx.amount),0),
+        'مصرف هزینه‌ها': mTxs.filter(tx => tx.category==='expense').reduce((s,tx)=>s+Number(tx.amount),0),
+        'مصرف پس‌انداز': mTxs.filter(tx => tx.category==='save').reduce((s,tx)=>s+Number(tx.amount),0),
       }
     })
     const wb = XLSX.utils.book_new()
@@ -137,8 +128,6 @@ export function Dashboard() {
     return <div className="flex min-h-screen items-center justify-center"><Spinner /></div>
   }
 
-  const softBg = 'bg-slate-100 dark:bg-slate-800'
-
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/80">
@@ -146,16 +135,16 @@ export function Dashboard() {
           <div className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white"><Wallet size={20} /></div>
             <div>
-              <h1 className="text-base font-bold text-slate-800 dark:text-slate-100">هوش دفتر مالی من</h1>
+              <h1 className="text-base font-bold text-slate-800 dark:text-slate-100">{t('app.title')}</h1>
               <p className="text-xs text-slate-400 dark:text-slate-500">{auth.user?.email}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={toggle} className="btn-ghost p-2.5" title={theme === 'light' ? 'حالت تاریک' : 'حالت روشن'}>
+            <button onClick={toggle} className="btn-ghost p-2.5" title={theme === 'light' ? t('dash.darkMode') : t('dash.lightMode')}>
               {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
             </button>
-            <button onClick={()=>setSettingsModal(true)} className="btn-ghost p-2.5" title="تنظیمات"><Settings size={18} /></button>
-            <button onClick={auth.signOut} className="btn-ghost text-xs"><LogOut size={16} /> خروج</button>
+            <button onClick={()=>setSettingsModal(true)} className="btn-ghost p-2.5" title={t('dash.settings')}><Settings size={18} /></button>
+            <button onClick={auth.signOut} className="btn-ghost text-xs"><LogOut size={16} /> {t('dash.logout')}</button>
           </div>
         </div>
       </header>
@@ -164,8 +153,8 @@ export function Dashboard() {
         <section className="card">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">داشبورد ماهانه</h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400">درآمد خود را ثبت کنید تا به‌صورت خودکار بر اساس درصد انتخابی تقسیم شود</p>
+              <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">{t('dash.title')}</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{t('dash.desc')}</p>
             </div>
             <div className="flex items-center gap-2">
               <select value={f.selMonth} onChange={e=>f.setSelMonth(+e.target.value)} className="input w-auto py-2">
@@ -178,22 +167,22 @@ export function Dashboard() {
           </div>
 
           <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard label="درآمد ماه" value={formatToman(f.income)} sub={monthLabel(f.selYear, f.selMonth)} color="bg-brand-50 text-brand-600 dark:bg-brand-950/50 dark:text-brand-400" icon={<Wallet size={16}/>} />
-            <StatCard label="سرمایه خالص" value={formatToman(totals.netWorth)} sub="تجمعی همه ماه‌ها" color="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400" icon={<TrendingUp size={16}/>} />
-            <StatCard label="کل هزینه‌ها" value={formatToman(totals.totalExpense)} sub="تجمعی" color="bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400" icon={<TrendingDown size={16}/>} />
-            <StatCard label="کل پس‌انداز" value={formatToman(totals.totalSave)} sub="تجمعی" color="bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400" icon={<PiggyBank size={16}/>} />
+            <StatCard label={t('dash.monthIncome')} value={formatToman(f.income)} sub={monthLabel(f.selYear, f.selMonth)} color="bg-brand-50 text-brand-600 dark:bg-brand-950/50 dark:text-brand-400" icon={<Wallet size={16}/>} />
+            <StatCard label={t('dash.netWorth')} value={formatToman(totals.netWorth)} sub={t('dash.cumulativeAll')} color="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400" icon={<TrendingUp size={16}/>} />
+            <StatCard label={t('dash.totalExpense')} value={formatToman(totals.totalExpense)} sub={t('dash.cumulative')} color="bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400" icon={<TrendingDown size={16}/>} />
+            <StatCard label={t('dash.totalSave')} value={formatToman(totals.totalSave)} sub={t('dash.cumulative')} color="bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400" icon={<PiggyBank size={16}/>} />
           </div>
 
           <div className="mt-4 flex gap-2">
-            <button onClick={()=>setIncomeModal(true)} className="btn-primary"><Plus size={16}/> ثبت درآمد جدید</button>
-            {f.current && <button onClick={()=>f.deleteMonth(f.current!.id)} className="btn-danger"><Trash2 size={16}/> حذف ماه</button>}
+            <button onClick={()=>setIncomeModal(true)} className="btn-primary"><Plus size={16}/> {t('dash.addIncome')}</button>
+            {f.current && <button onClick={()=>f.deleteMonth(f.current!.id)} className="btn-danger"><Trash2 size={16}/> {t('dash.deleteMonth')}</button>}
           </div>
         </section>
 
         {f.entries.length > 0 && f.income > 0 ? (
           <section className="grid gap-6 lg:grid-cols-3">
             <div className="card lg:col-span-1">
-              <h3 className="mb-4 text-sm font-bold text-slate-700 dark:text-slate-200">تخصیص درآمد</h3>
+              <h3 className="mb-4 text-sm font-bold text-slate-700 dark:text-slate-200">{t('dash.allocation')}</h3>
               <div className="relative h-56">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -204,7 +193,7 @@ export function Dashboard() {
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-xs text-slate-400 dark:text-slate-500">درآمد ماه</span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500">{t('dash.monthIncome')}</span>
                   <span className="tnum text-xl font-extrabold text-slate-800 dark:text-slate-100">{formatToman(f.income)}</span>
                 </div>
               </div>
@@ -220,22 +209,22 @@ export function Dashboard() {
 
             <div className="grid gap-4 lg:col-span-2 sm:grid-cols-3">
               {(Object.keys(CAT_META) as CatKey[]).map(cat => (
-                <BudgetCard key={cat} cat={cat} f={f} onAdd={()=>setTxModal(cat)} />
+                <BudgetCard key={cat} cat={cat} catLabelText={catLabel(cat)} f={f} onAdd={()=>setTxModal(cat)} t={t} />
               ))}
             </div>
           </section>
         ) : (
           <section className="card flex flex-col items-center justify-center py-12 text-center animate-fade-in">
             <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-950/50 dark:text-brand-400"><Wallet size={28}/></div>
-            <h3 className="text-lg font-bold text-slate-700 dark:text-slate-200">برای شروع، درآمد این ماه را ثبت کنید</h3>
-            <p className="mt-1 max-w-sm text-sm text-slate-500 dark:text-slate-400">پس از ثبت درآمد، مبلغ به‌صورت خودکار بر اساس درصد انتخابی شما تقسیم می‌شود.</p>
-            <button onClick={()=>setIncomeModal(true)} className="btn-primary mt-4"><Plus size={16}/> ثبت درآمد جدید</button>
+            <h3 className="text-lg font-bold text-slate-700 dark:text-slate-200">{t('dash.emptyTitle')}</h3>
+            <p className="mt-1 max-w-sm text-sm text-slate-500 dark:text-slate-400">{t('dash.emptyDesc')}</p>
+            <button onClick={()=>setIncomeModal(true)} className="btn-primary mt-4"><Plus size={16}/> {t('dash.addIncome')}</button>
           </section>
         )}
 
         {trendData.length > 0 && (
           <section className="card">
-            <h3 className="mb-4 text-sm font-bold text-slate-700 dark:text-slate-200">روند ۶ ماه اخیر</h3>
+            <h3 className="mb-4 text-sm font-bold text-slate-700 dark:text-slate-200">{t('chart.trend')}</h3>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={trendData}>
@@ -244,10 +233,10 @@ export function Dashboard() {
                   <YAxis tickFormatter={v=>toFaDigits(String(Math.round(v/1000000)))+'م'} tick={{fontFamily:'Vazirmatn',fontSize:11,fill:'#94a3b8'}} width={50} />
                   <Tooltip formatter={(v:number)=>formatToman(v)} contentStyle={{fontFamily:'Vazirmatn',borderRadius:'12px',border:'none',boxShadow:'0 4px 12px rgba(0,0,0,0.1)'}} />
                   <Legend wrapperStyle={{fontFamily:'Vazirmatn',fontSize:12}} />
-                  <Bar dataKey="درآمد" fill="#338eff" radius={[6,6,0,0]} />
-                  <Bar dataKey="سرمایه‌گذاری" fill="#10b981" radius={[6,6,0,0]} />
-                  <Bar dataKey="هزینه" fill="#ef4444" radius={[6,6,0,0]} />
-                  <Bar dataKey="پس‌انداز" fill="#f59e0b" radius={[6,6,0,0]} />
+                  <Bar dataKey={lang === 'fa' ? 'درآمد' : 'Income'} fill="#338eff" radius={[6,6,0,0]} />
+                  <Bar dataKey={lang === 'fa' ? 'سرمایه‌گذاری' : 'Invest'} fill="#10b981" radius={[6,6,0,0]} />
+                  <Bar dataKey={lang === 'fa' ? 'هزینه' : 'Expense'} fill="#ef4444" radius={[6,6,0,0]} />
+                  <Bar dataKey={lang === 'fa' ? 'پس‌انداز' : 'Save'} fill="#f59e0b" radius={[6,6,0,0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -257,7 +246,7 @@ export function Dashboard() {
         <section className="grid gap-6 lg:grid-cols-2">
           {netWorthData.length > 0 && (
             <div className="card">
-              <h3 className="mb-4 text-sm font-bold text-slate-700 dark:text-slate-200">رشد خالص سرمایه (تجمعی)</h3>
+              <h3 className="mb-4 text-sm font-bold text-slate-700 dark:text-slate-200">{t('chart.netGrowth')}</h3>
               <div className="h-56">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={netWorthData}>
@@ -271,7 +260,7 @@ export function Dashboard() {
                     <XAxis dataKey="label" tick={{fontFamily:'Vazirmatn',fontSize:10,fill:'#64748b'}} />
                     <YAxis tickFormatter={v=>toFaDigits(String(Math.round(v/1000000)))+'م'} tick={{fontFamily:'Vazirmatn',fontSize:11,fill:'#94a3b8'}} width={50} />
                     <Tooltip formatter={(v:number)=>formatToman(v)} contentStyle={{fontFamily:'Vazirmatn',borderRadius:'12px',border:'none',boxShadow:'0 4px 12px rgba(0,0,0,0.1)'}} />
-                    <Area type="monotone" dataKey="ارزش" stroke="#10b981" strokeWidth={2.5} fill="url(#nw)" />
+                    <Area type="monotone" dataKey={lang === 'fa' ? 'ارزش' : 'Value'} stroke="#10b981" strokeWidth={2.5} fill="url(#nw)" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -280,19 +269,19 @@ export function Dashboard() {
 
           <div className="card">
             <button onClick={()=>setCompOpen(o=>!o)} className="flex w-full items-center justify-between text-right">
-              <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200">محاسبه سود مرکب و سرمایه‌گذاری طلا</h3>
+              <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200">{t('chart.compound')}</h3>
               <ChevronDown size={18} className={clsx('text-slate-400 transition-transform', compOpen && 'rotate-180')} />
             </button>
-            <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">پیش‌بینی رشد پس‌انداز و سرمایه‌گذاری طلا در آینده</p>
-            {compOpen && <CompoundCalculator currentSave={f.spent.save} currentInvest={f.spent.invest} />}
+            <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">{t('chart.compoundDesc')}</p>
+            {compOpen && <CompoundCalculator currentSave={f.spent.save} currentInvest={f.spent.invest} t={t} />}
           </div>
         </section>
 
         {f.income > 0 && (
           <section className="card">
-            <h3 className="mb-4 text-sm font-bold text-slate-700 dark:text-slate-200">ثبت‌های درآمد {monthLabel(f.selYear, f.selMonth)}</h3>
+            <h3 className="mb-4 text-sm font-bold text-slate-700 dark:text-slate-200">{t('income.title')} {monthLabel(f.selYear, f.selMonth)}</h3>
             {f.entries.length === 0 ? (
-              <p className="py-4 text-center text-sm text-slate-400 dark:text-slate-500">هنوز درآمدی ثبت نشده است.</p>
+              <p className="py-4 text-center text-sm text-slate-400 dark:text-slate-500">{t('income.empty')}</p>
             ) : (
               <div className="space-y-2">
                 {f.entries.map(e => (
@@ -307,9 +296,9 @@ export function Dashboard() {
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="text-left text-xs text-slate-400 dark:text-slate-500">
-                        <p>سرمایه: {toFaDigits(e.alloc_invest)}٪</p>
-                        <p>هزینه: {toFaDigits(e.alloc_expense)}٪</p>
-                        <p>پس‌انداز: {toFaDigits(e.alloc_save)}٪</p>
+                        <p>{t('income.allocInvest')}: {toFaDigits(e.alloc_invest)}٪</p>
+                        <p>{t('income.allocExpense')}: {toFaDigits(e.alloc_expense)}٪</p>
+                        <p>{t('income.allocSave')}: {toFaDigits(e.alloc_save)}٪</p>
                       </div>
                       <button onClick={()=>f.deleteIncomeEntry(e.id)} className="text-slate-300 hover:text-rose-500 transition-colors dark:text-slate-600"><Trash2 size={16}/></button>
                     </div>
@@ -322,27 +311,28 @@ export function Dashboard() {
 
         {f.income > 0 && (
           <section className="card">
-            <h3 className="mb-4 text-sm font-bold text-slate-700 dark:text-slate-200">تراکنش‌های {monthLabel(f.selYear, f.selMonth)}</h3>
+            <h3 className="mb-4 text-sm font-bold text-slate-700 dark:text-slate-200">{t('tx.title')} {monthLabel(f.selYear, f.selMonth)}</h3>
             {f.txs.length === 0 ? (
-              <p className="py-6 text-center text-sm text-slate-400 dark:text-slate-500">هنوز تراکنشی ثبت نشده است. از کارت‌های بالا تراکنش اضافه کنید.</p>
+              <p className="py-6 text-center text-sm text-slate-400 dark:text-slate-500">{t('tx.empty')}</p>
             ) : (
               <div className="space-y-2">
-                {f.txs.map(t => {
-                  const meta = CAT_META[t.category as CatKey]
+                {f.txs.map(tx => {
+                  const meta = CAT_META[tx.category as CatKey]
                   const Icon = meta.icon
+                  const label = lang === 'fa' ? meta.fa : meta.en
                   return (
-                    <div key={t.id} className="flex items-center justify-between rounded-xl border border-slate-100 px-4 py-3 transition-colors hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/50">
+                    <div key={tx.id} className="flex items-center justify-between rounded-xl border border-slate-100 px-4 py-3 transition-colors hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/50">
                       <div className="flex items-center gap-3">
                         <span className={clsx('flex h-9 w-9 items-center justify-center rounded-lg', meta.soft, meta.darkSoft)}><Icon size={18}/></span>
                         <div>
-                          <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t.sub_type ?? meta.label}</p>
-                          {t.note && <p className="text-xs text-slate-400 dark:text-slate-500">{t.note}</p>}
-                          <p className="text-xs text-slate-400 dark:text-slate-500">{gregorianToJalaliString(t.date)}</p>
+                          <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{tx.sub_type ?? label}</p>
+                          {tx.note && <p className="text-xs text-slate-400 dark:text-slate-500">{tx.note}</p>}
+                          <p className="text-xs text-slate-400 dark:text-slate-500">{gregorianToJalaliString(tx.date)}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className="tnum text-sm font-bold text-slate-700 dark:text-slate-200">{formatToman(Number(t.amount))} ت</span>
-                        <button onClick={()=>f.deleteTx(t.id)} className="text-slate-300 hover:text-rose-500 transition-colors dark:text-slate-600"><Trash2 size={16}/></button>
+                        <span className="tnum text-sm font-bold text-slate-700 dark:text-slate-200">{formatToman(Number(tx.amount))} ت</span>
+                        <button onClick={()=>f.deleteTx(tx.id)} className="text-slate-300 hover:text-rose-500 transition-colors dark:text-slate-600"><Trash2 size={16}/></button>
                       </div>
                     </div>
                   )
@@ -359,19 +349,22 @@ export function Dashboard() {
         selYear={f.selYear}
         selMonth={f.selMonth}
         currentIncome={f.income}
+        t={t}
         onSave={async (inc,note,idate,alloc)=>{ await f.addIncomeEntry(inc,idate,note,alloc); setIncomeModal(false) }}
       />
 
       {txModal && (
-        <TxModal cat={txModal} selYear={f.selYear} selMonth={f.selMonth} budget={f.budgets[txModal]} spent={f.spent[txModal]} onClose={()=>setTxModal(null)} onAdd={async (amt,st,note,date)=>{ await f.addTx(txModal,amt,st,note,date); setTxModal(null) }} />
+        <TxModal cat={txModal} catLabelText={catLabel(txModal)} selYear={f.selYear} selMonth={f.selMonth} budget={f.budgets[txModal]} spent={f.spent[txModal]} t={t} onClose={()=>setTxModal(null)} onAdd={async (amt,st,note,date)=>{ await f.addTx(txModal,amt,st,note,date); setTxModal(null) }} />
       )}
 
-      <SettingsModal open={settingsModal} onClose={()=>setSettingsModal(false)} onExport={exportExcel} monthsCount={allMonths.length} txsCount={allTxs.length} entriesCount={allEntries.length} />
+      <SettingsModal open={settingsModal} onClose={()=>setSettingsModal(false)} onExport={exportExcel} monthsCount={allMonths.length} txsCount={allTxs.length} entriesCount={allEntries.length} lang={lang} setLang={setLang} t={t} />
     </div>
   )
 }
 
-function BudgetCard({ cat, f, onAdd }: { cat: CatKey; f: ReturnType<typeof useFinance>; onAdd: ()=>void }) {
+function BudgetCard({ cat, catLabelText, f, onAdd, t }: {
+  cat: CatKey; catLabelText: string; f: ReturnType<typeof useFinance>; onAdd: ()=>void; t: (k: string) => string
+}) {
   const meta = CAT_META[cat]
   const Icon = meta.icon
   const budget = f.budgets[cat]
@@ -384,33 +377,34 @@ function BudgetCard({ cat, f, onAdd }: { cat: CatKey; f: ReturnType<typeof useFi
   return (
     <div className="card flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <span className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200"><Icon size={18} className={clsx(meta.soft.split(' ')[1], meta.darkSoft)} />{meta.label}</span>
+        <span className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200"><Icon size={18} className={clsx(meta.soft.split(' ')[1], meta.darkSoft)} />{catLabelText}</span>
         <span className="chip bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">{toFaDigits(pct)}٪</span>
       </div>
       <div>
         <div className="flex items-end justify-between text-xs text-slate-400 dark:text-slate-500">
-          <span>سقف: {formatToman(budget)}</span>
-          <span className={over ? 'text-rose-500' : ''}>{toFaDigits(usePct)}٪ استفاده</span>
+          <span>{t('budget.budget')}: {formatToman(budget)}</span>
+          <span className={over ? 'text-rose-500' : ''}>{toFaDigits(usePct)}٪ {t('budget.used')}</span>
         </div>
         <div className="mt-1.5"><ProgressBar value={spent} max={budget} color={meta.bg} /></div>
       </div>
       <div className="flex items-end justify-between">
         <div>
-          <p className="text-xs text-slate-400 dark:text-slate-500">مصرف شده</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500">{t('budget.spent')}</p>
           <p className="tnum text-base font-bold text-slate-700 dark:text-slate-200">{formatToman(spent)}</p>
         </div>
         <div className="text-left">
-          <p className="text-xs text-slate-400 dark:text-slate-500">باقی‌مانده</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500">{t('budget.remaining')}</p>
           <p className={clsx('tnum text-base font-bold', over ? 'text-rose-500' : 'text-emerald-600 dark:text-emerald-400')}>{formatToman(remaining)}</p>
         </div>
       </div>
-      <button onClick={onAdd} className="btn-ghost w-full text-xs"><Plus size={14}/> ثبت {meta.label}</button>
+      <button onClick={onAdd} className="btn-ghost w-full text-xs"><Plus size={14}/> {t('budget.addTx')} {catLabelText}</button>
     </div>
   )
 }
 
-function IncomeModal({ open, onClose, selYear, selMonth, currentIncome, onSave }: {
+function IncomeModal({ open, onClose, selYear, selMonth, currentIncome, t, onSave }: {
   open: boolean; onClose: ()=>void; selYear: number; selMonth: number; currentIncome: number;
+  t: (k: string) => string;
   onSave: (income: number, note: string | undefined, incomeDate: string, alloc: AllocPcts) => Promise<void>
 }) {
   const today = todayJalaliYMD()
@@ -448,7 +442,6 @@ function IncomeModal({ open, onClose, selYear, selMonth, currentIncome, onSave }
     } else {
       otherKeys.forEach((k,i) => { next[k] = i === 0 ? remaining : 0 })
     }
-    // fix rounding
     const diff = 100 - (next.invest + next.expense + next.save)
     next[otherKeys[0]] += diff
     setAlloc(next)
@@ -461,22 +454,28 @@ function IncomeModal({ open, onClose, selYear, selMonth, currentIncome, onSave }
     setSaving(false)
   }
 
+  const allocLabels = {
+    invest: t('dash.invest'),
+    expense: t('dash.expense'),
+    save: t('dash.save'),
+  }
+
   return (
-    <Modal open={open} onClose={onClose} title="ثبت درآمد جدید">
+    <Modal open={open} onClose={onClose} title={t('modal.incomeTitle')}>
       <div className="space-y-4">
         {currentIncome > 0 && (
           <div className="rounded-xl bg-brand-50 p-3 text-xs text-brand-700 dark:bg-brand-950/30 dark:text-brand-400">
-            <p>درآمد ثبت‌شده تا الان این ماه: <span className="tnum font-bold">{formatToman(currentIncome)}</span></p>
-            <p className="mt-1">این مبلغ جدید به درآمد قبلی اضافه می‌شود.</p>
+            <p>{t('modal.currentIncome')}: <span className="tnum font-bold">{formatToman(currentIncome)}</span></p>
+            <p className="mt-1">{t('modal.addNote')}</p>
           </div>
         )}
         <div>
-          <label className="label">مبلغ درآمد (تومان)</label>
+          <label className="label">{t('modal.amount')}</label>
           <input type="text" inputMode="numeric" value={toFaDigits(income)} onChange={e=>setIncome(e.target.value.replace(/[۰-۹]/g,d=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).replace(/[^0-9]/g,''))} className="input tnum text-lg" placeholder="۵۰۰۰۰۰۰" />
         </div>
 
         <div>
-          <label className="label">تاریخ واریز درآمد (شمسی)</label>
+          <label className="label">{t('modal.incomeDate')}</label>
           <div className="flex items-center gap-2">
             <select value={dYear} onChange={e=>setDYear(+e.target.value)} className="input w-auto py-2">
               {YEAR_RANGE.map(y => <option key={y} value={y}>{toFaDigits(y)}</option>)}
@@ -488,37 +487,37 @@ function IncomeModal({ open, onClose, selYear, selMonth, currentIncome, onSave }
               {Array.from({length: maxDay}, (_,i) => i+1).map(d => <option key={d} value={d}>{toFaDigits(d)}</option>)}
             </select>
           </div>
-          <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500">تاریخ انتخابی: {toFaDigits(dYear)}/{toFaDigits(String(dMonth).padStart(2,'0'))}/{toFaDigits(String(safeDay).padStart(2,'0'))}</p>
+          <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500">{t('modal.selectedDate')}: {toFaDigits(dYear)}/{toFaDigits(String(dMonth).padStart(2,'0'))}/{toFaDigits(String(safeDay).padStart(2,'0'))}</p>
         </div>
 
         <div className="rounded-xl bg-slate-50 p-4 dark:bg-slate-800/50">
-          <p className="mb-3 text-xs font-semibold text-slate-600 dark:text-slate-300">درصد تخصیص (مجموع باید ۱۰۰٪ باشد)</p>
+          <p className="mb-3 text-xs font-semibold text-slate-600 dark:text-slate-300">{t('modal.allocTitle')}</p>
           <div className="space-y-3">
-            <AllocSlider label="سرمایه‌گذاری" value={alloc.invest} color="text-emerald-600 dark:text-emerald-400" onChange={v=>updateAlloc('invest',v)} />
-            <AllocSlider label="هزینه‌ها" value={alloc.expense} color="text-rose-600 dark:text-rose-400" onChange={v=>updateAlloc('expense',v)} />
-            <AllocSlider label="پس‌انداز" value={alloc.save} color="text-amber-600 dark:text-amber-400" onChange={v=>updateAlloc('save',v)} />
+            <AllocSlider label={allocLabels.invest} value={alloc.invest} color="text-emerald-600 dark:text-emerald-400" onChange={v=>updateAlloc('invest',v)} />
+            <AllocSlider label={allocLabels.expense} value={alloc.expense} color="text-rose-600 dark:text-rose-400" onChange={v=>updateAlloc('expense',v)} />
+            <AllocSlider label={allocLabels.save} value={alloc.save} color="text-amber-600 dark:text-amber-400" onChange={v=>updateAlloc('save',v)} />
           </div>
           <div className="mt-3 flex items-center justify-between border-t border-slate-200 pt-2 dark:border-slate-700">
-            <span className="text-xs text-slate-500 dark:text-slate-400">مجموع:</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">{t('modal.total')}:</span>
             <span className={clsx('tnum text-sm font-bold', allocSum === 100 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500')}>{toFaDigits(allocSum)}٪</span>
           </div>
         </div>
 
         <div className="rounded-xl bg-slate-50 p-3 text-xs text-slate-500 dark:bg-slate-800/50 dark:text-slate-400">
-          <p>پیش‌نمایش تقسیم درآمد:</p>
+          <p>{t('modal.preview')}:</p>
           <ul className="mt-2 space-y-1">
-            <li className="flex justify-between"><span className="text-emerald-600 dark:text-emerald-400">سرمایه‌گذاری ({toFaDigits(alloc.invest)}٪)</span><span className="tnum font-semibold">{formatToman(pctOf(amt, alloc.invest))}</span></li>
-            <li className="flex justify-between"><span className="text-rose-600 dark:text-rose-400">هزینه‌ها ({toFaDigits(alloc.expense)}٪)</span><span className="tnum font-semibold">{formatToman(pctOf(amt, alloc.expense))}</span></li>
-            <li className="flex justify-between"><span className="text-amber-600 dark:text-amber-400">پس‌انداز ({toFaDigits(alloc.save)}٪)</span><span className="tnum font-semibold">{formatToman(pctOf(amt, alloc.save))}</span></li>
+            <li className="flex justify-between"><span className="text-emerald-600 dark:text-emerald-400">{allocLabels.invest} ({toFaDigits(alloc.invest)}٪)</span><span className="tnum font-semibold">{formatToman(pctOf(amt, alloc.invest))}</span></li>
+            <li className="flex justify-between"><span className="text-rose-600 dark:text-rose-400">{allocLabels.expense} ({toFaDigits(alloc.expense)}٪)</span><span className="tnum font-semibold">{formatToman(pctOf(amt, alloc.expense))}</span></li>
+            <li className="flex justify-between"><span className="text-amber-600 dark:text-amber-400">{allocLabels.save} ({toFaDigits(alloc.save)}٪)</span><span className="tnum font-semibold">{formatToman(pctOf(amt, alloc.save))}</span></li>
           </ul>
         </div>
 
         <div>
-          <label className="label">یادداشت (اختیاری)</label>
-          <input type="text" value={notev} onChange={e=>setNotev(e.target.value)} className="input" placeholder="مثلاً: حقوق فروردین" />
+          <label className="label">{t('modal.note')}</label>
+          <input type="text" value={notev} onChange={e=>setNotev(e.target.value)} className="input" placeholder={t('modal.notePlaceholder')} />
         </div>
         <button onClick={submit} disabled={saving || amt<=0 || allocSum !== 100} className="btn-primary w-full">
-          {saving ? 'در حال ذخیره…' : 'ذخیره'}
+          {saving ? t('modal.saving') : t('modal.save')}
         </button>
       </div>
     </Modal>
@@ -542,8 +541,8 @@ const SUB_TYPES: Record<CatKey, string[]> = {
   save: ['سود مرکب','سپرده بانکی','پس‌انداز نقد','سایر'],
 }
 
-function TxModal({ cat, selYear, selMonth, budget, spent, onClose, onAdd }: {
-  cat: CatKey; selYear: number; selMonth: number; budget: number; spent: number; onClose: ()=>void;
+function TxModal({ cat, catLabelText, selYear, selMonth, budget, spent, t, onClose, onAdd }: {
+  cat: CatKey; catLabelText: string; selYear: number; selMonth: number; budget: number; spent: number; t: (k: string) => string; onClose: ()=>void;
   onAdd: (amount: number, subType: string, note?: string, date?: string) => Promise<void>
 }) {
   const today = todayJalaliYMD()
@@ -570,20 +569,20 @@ function TxModal({ cat, selYear, selMonth, budget, spent, onClose, onAdd }: {
   }
 
   return (
-    <Modal open={true} onClose={onClose} title={`ثبت ${meta.label}`}>
+    <Modal open={true} onClose={onClose} title={`${t('modal.txTitle')} ${catLabelText}`}>
       <div className="space-y-4">
         <div className="rounded-xl bg-slate-50 p-3 text-xs text-slate-500 dark:bg-slate-800/50 dark:text-slate-400">
-          <div className="flex justify-between"><span>سقف {meta.label}</span><span className="tnum font-semibold">{formatToman(budget)}</span></div>
-          <div className="flex justify-between"><span>مصرف شده</span><span className="tnum">{formatToman(spent)}</span></div>
-          <div className="flex justify-between"><span>باقی‌مانده</span><span className="tnum font-semibold text-emerald-600 dark:text-emerald-400">{formatToman(remaining)}</span></div>
+          <div className="flex justify-between"><span>{t('modal.txBudget')} {catLabelText}</span><span className="tnum font-semibold">{formatToman(budget)}</span></div>
+          <div className="flex justify-between"><span>{t('modal.txSpent')}</span><span className="tnum">{formatToman(spent)}</span></div>
+          <div className="flex justify-between"><span>{t('modal.txRemaining')}</span><span className="tnum font-semibold text-emerald-600 dark:text-emerald-400">{formatToman(remaining)}</span></div>
         </div>
         <div>
-          <label className="label">مبلغ (تومان)</label>
+          <label className="label">{t('modal.txAmount')}</label>
           <input type="text" inputMode="numeric" value={toFaDigits(amount)} onChange={e=>setAmount(e.target.value.replace(/[۰-۹]/g,d=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).replace(/[^0-9]/g,''))} className="input tnum text-lg" placeholder="۰" />
-          {over && <p className="mt-1.5 text-xs text-rose-500">این مبلغ از سقف باقی‌مانده بیشتر است. می‌توانید ثبت کنید اما از سقف فراتر می‌رود.</p>}
+          {over && <p className="mt-1.5 text-xs text-rose-500">{t('modal.txOver')}</p>}
         </div>
         <div>
-          <label className="label">نوع</label>
+          <label className="label">{t('modal.txType')}</label>
           <div className="flex flex-wrap gap-2">
             {SUB_TYPES[cat].map(st => (
               <button key={st} onClick={()=>setSubType(st)} className={clsx('chip transition-all', subType===st ? meta.bg+' text-white' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400')}>{st}</button>
@@ -591,11 +590,11 @@ function TxModal({ cat, selYear, selMonth, budget, spent, onClose, onAdd }: {
           </div>
         </div>
         <div>
-          <label className="label">یادداشت (اختیاری)</label>
-          <input type="text" value={note} onChange={e=>setNote(e.target.value)} className="input" placeholder="توضیح بیشتر…" />
+          <label className="label">{t('modal.note')}</label>
+          <input type="text" value={note} onChange={e=>setNote(e.target.value)} className="input" placeholder={t('modal.txNotePlaceholder')} />
         </div>
         <div>
-          <label className="label">تاریخ تراکنش (شمسی)</label>
+          <label className="label">{t('modal.txDate')}</label>
           <div className="flex items-center gap-2">
             <select value={dYear} onChange={e=>setDYear(+e.target.value)} className="input w-auto py-2">
               {YEAR_RANGE.map(y => <option key={y} value={y}>{toFaDigits(y)}</option>)}
@@ -607,33 +606,115 @@ function TxModal({ cat, selYear, selMonth, budget, spent, onClose, onAdd }: {
               {Array.from({length: maxDay}, (_,i) => i+1).map(d => <option key={d} value={d}>{toFaDigits(d)}</option>)}
             </select>
           </div>
-          <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500">تاریخ انتخابی: {toFaDigits(dYear)}/{toFaDigits(String(dMonth).padStart(2,'0'))}/{toFaDigits(String(safeDay).padStart(2,'0'))}</p>
+          <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500">{t('modal.selectedDate')}: {toFaDigits(dYear)}/{toFaDigits(String(dMonth).padStart(2,'0'))}/{toFaDigits(String(safeDay).padStart(2,'0'))}</p>
         </div>
-        <button onClick={submit} disabled={saving || amt<=0} className="btn-primary w-full">{saving ? 'در حال ذخیره…' : 'ثبت تراکنش'}</button>
+        <button onClick={submit} disabled={saving || amt<=0} className="btn-primary w-full">{saving ? t('modal.saving') : t('modal.txSave')}</button>
       </div>
     </Modal>
   )
 }
 
-function SettingsModal({ open, onClose, onExport, monthsCount, txsCount, entriesCount }: {
-  open: boolean; onClose: ()=>void; onExport: ()=>void; monthsCount: number; txsCount: number; entriesCount: number
+function SettingsModal({ open, onClose, onExport, monthsCount, txsCount, entriesCount, lang, setLang, t }: {
+  open: boolean; onClose: ()=>void; onExport: ()=>void; monthsCount: number; txsCount: number; entriesCount: number;
+  lang: 'fa' | 'en'; setLang: (l: 'fa' | 'en') => void; t: (k: string) => string
 }) {
+  const [newPwd, setNewPwd] = useState('')
+  const [confirmPwd, setConfirmPwd] = useState('')
+  const [pwdMsg, setPwdMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [pwdLoading, setPwdLoading] = useState(false)
+
+  const changePassword = async () => {
+    setPwdMsg(null)
+    if (newPwd.length < 6) {
+      setPwdMsg({ type: 'error', text: t('auth.pwdMin') })
+      return
+    }
+    if (newPwd !== confirmPwd) {
+      setPwdMsg({ type: 'error', text: t('settings.pwdMismatch') })
+      return
+    }
+    setPwdLoading(true)
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPwd })
+      if (error) throw error
+      setPwdMsg({ type: 'success', text: t('settings.pwdSuccess') })
+      setNewPwd('')
+      setConfirmPwd('')
+    } catch {
+      setPwdMsg({ type: 'error', text: t('settings.pwdError') })
+    } finally {
+      setPwdLoading(false)
+    }
+  }
+
   return (
-    <Modal open={open} onClose={onClose} title="تنظیمات">
+    <Modal open={open} onClose={onClose} title={t('settings.title')}>
       <div className="space-y-4">
         <div className="rounded-xl bg-slate-50 p-4 dark:bg-slate-800/50">
-          <h4 className="mb-2 text-sm font-bold text-slate-700 dark:text-slate-200">آمار حساب شما</h4>
+          <h4 className="mb-2 text-sm font-bold text-slate-700 dark:text-slate-200">{t('settings.stats')}</h4>
           <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
-            <span>تعداد ماه‌های ثبت‌شده:</span>
+            <span>{t('settings.months')}:</span>
             <span className="tnum font-semibold">{toFaDigits(monthsCount)}</span>
           </div>
           <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
-            <span>تعداد ثبت‌های درآمد:</span>
+            <span>{t('settings.entries')}:</span>
             <span className="tnum font-semibold">{toFaDigits(entriesCount)}</span>
           </div>
           <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
-            <span>تعداد تراکنش‌ها:</span>
+            <span>{t('settings.txs')}:</span>
             <span className="tnum font-semibold">{toFaDigits(txsCount)}</span>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-950/50 dark:text-brand-400">
+              <Globe size={20} />
+            </span>
+            <div className="flex-1">
+              <h4 className="text-sm font-bold text-slate-700 dark:text-slate-200">{t('settings.language')}</h4>
+              <p className="text-xs text-slate-400 dark:text-slate-500">{t('settings.languageDesc')}</p>
+            </div>
+          </div>
+          <div className="mt-3 flex rounded-xl bg-slate-100 p-1">
+            <button
+              onClick={() => setLang('fa')}
+              className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-all ${lang==='fa' ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-500'}`}
+            >فارسی</button>
+            <button
+              onClick={() => setLang('en')}
+              className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-all ${lang==='en' ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-500'}`}
+            >English</button>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400">
+              <KeyRound size={20} />
+            </span>
+            <div className="flex-1">
+              <h4 className="text-sm font-bold text-slate-700 dark:text-slate-200">{t('settings.changePwd')}</h4>
+              <p className="text-xs text-slate-400 dark:text-slate-500">{t('settings.changePwdDesc')}</p>
+            </div>
+          </div>
+          <div className="mt-3 space-y-3">
+            <div>
+              <label className="label text-xs">{t('settings.newPwd')}</label>
+              <input type="password" value={newPwd} onChange={e=>setNewPwd(e.target.value)} className="input" placeholder={t('auth.pwdPlaceholder')} minLength={6} />
+            </div>
+            <div>
+              <label className="label text-xs">{t('settings.newPwdConfirm')}</label>
+              <input type="password" value={confirmPwd} onChange={e=>setConfirmPwd(e.target.value)} className="input" placeholder={t('auth.pwdPlaceholder')} minLength={6} />
+            </div>
+            {pwdMsg && (
+              <div className={`rounded-xl px-4 py-2.5 text-sm animate-fade-in ${pwdMsg.type === 'success' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+                {pwdMsg.text}
+              </div>
+            )}
+            <button onClick={changePassword} disabled={pwdLoading || !newPwd || !confirmPwd} className="btn-primary w-full">
+              {pwdLoading ? t('auth.loading') : t('settings.changePwdBtn')}
+            </button>
           </div>
         </div>
 
@@ -643,26 +724,26 @@ function SettingsModal({ open, onClose, onExport, monthsCount, txsCount, entries
               <FileSpreadsheet size={20} />
             </span>
             <div className="flex-1">
-              <h4 className="text-sm font-bold text-slate-700 dark:text-slate-200">خروجی اکسل</h4>
-              <p className="text-xs text-slate-400 dark:text-slate-500">دانلود کلیه ماه‌ها و تراکنش‌ها در یک فایل اکسل</p>
+              <h4 className="text-sm font-bold text-slate-700 dark:text-slate-200">{t('settings.export')}</h4>
+              <p className="text-xs text-slate-400 dark:text-slate-500">{t('settings.exportDesc')}</p>
             </div>
           </div>
           <button onClick={onExport} disabled={monthsCount === 0} className="btn-primary mt-3 w-full">
-            <FileSpreadsheet size={16} /> دانلود فایل اکسل
+            <FileSpreadsheet size={16} /> {t('settings.exportBtn')}
           </button>
-          {monthsCount === 0 && <p className="mt-2 text-center text-xs text-slate-400">هنوز داده‌ای برای خروجی وجود ندارد.</p>}
+          {monthsCount === 0 && <p className="mt-2 text-center text-xs text-slate-400">{t('settings.exportEmpty')}</p>}
         </div>
 
         <div className="rounded-xl bg-slate-50 p-4 text-xs text-slate-500 dark:bg-slate-800/50 dark:text-slate-400">
-          <p className="font-semibold text-slate-600 dark:text-slate-300">هوش دفتر مالی من</p>
-          <p className="mt-1">برای تغییر درصد تخصیص هر ماه، از دکمه «ثبت / ویرایش درآمد ماه» استفاده کنید.</p>
+          <p className="font-semibold text-slate-600 dark:text-slate-300">{t('settings.about')}</p>
+          <p className="mt-1">{t('settings.aboutDesc')}</p>
         </div>
       </div>
     </Modal>
   )
 }
 
-function CompoundCalculator({ currentSave, currentInvest }: { currentSave: number; currentInvest: number }) {
+function CompoundCalculator({ currentSave, currentInvest, t }: { currentSave: number; currentInvest: number; t: (k: string) => string }) {
   const [principal, setPrincipal] = useState(String(Math.round(currentSave) || ''))
   const [rate, setRate] = useState('30')
   const [months, setMonths] = useState('12')
@@ -686,40 +767,40 @@ function CompoundCalculator({ currentSave, currentInvest }: { currentSave: numbe
     <div className="mt-4 space-y-4">
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
-          <label className="label text-xs">اصل پس‌انداز (تومان)</label>
+          <label className="label text-xs">{t('calc.principal')}</label>
           <input className="input tnum" value={toFaDigits(principal)} onChange={e=>numInput(e.target.value,setPrincipal)} />
         </div>
         <div>
-          <label className="label text-xs">نرخ سود سالانه (٪)</label>
+          <label className="label text-xs">{t('calc.rate')}</label>
           <input className="input tnum" value={toFaDigits(rate)} onChange={e=>numInput(e.target.value,setRate)} />
         </div>
         <div>
-          <label className="label text-xs">مدت (ماه)</label>
+          <label className="label text-xs">{t('calc.duration')}</label>
           <input className="input tnum" value={toFaDigits(months)} onChange={e=>numInput(e.target.value,setMonths)} />
         </div>
         <div className="flex items-end">
           <div className="w-full rounded-xl bg-amber-50 p-3 dark:bg-amber-950/30">
-            <p className="text-xs text-amber-600 dark:text-amber-400">ارزش آینده پس‌انداز</p>
+            <p className="text-xs text-amber-600 dark:text-amber-400">{t('calc.futureSave')}</p>
             <p className="tnum text-lg font-bold text-amber-700 dark:text-amber-300">{formatToman(saveFuture)}</p>
-            <p className="text-xs text-amber-500 dark:text-amber-500">سود: {formatToman(saveProfit)}</p>
+            <p className="text-xs text-amber-500 dark:text-amber-500">{t('calc.profit')}: {formatToman(saveProfit)}</p>
           </div>
         </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 border-t border-slate-100 pt-4 dark:border-slate-800">
         <div>
-          <label className="label text-xs">اصل سرمایه‌گذاری طلا (تومان)</label>
+          <label className="label text-xs">{t('calc.goldPrincipal')}</label>
           <input className="input tnum" value={toFaDigits(goldPrincipal)} onChange={e=>numInput(e.target.value,setGoldPrincipal)} />
         </div>
         <div>
-          <label className="label text-xs">رشد سالانه طلا (٪)</label>
+          <label className="label text-xs">{t('calc.goldRate')}</label>
           <input className="input tnum" value={toFaDigits(goldRate)} onChange={e=>numInput(e.target.value,setGoldRate)} />
         </div>
         <div className="flex items-end">
           <div className="w-full rounded-xl bg-emerald-50 p-3 dark:bg-emerald-950/30">
-            <p className="text-xs text-emerald-600 dark:text-emerald-400">ارزش آینده سرمایه‌گذاری طلا</p>
+            <p className="text-xs text-emerald-600 dark:text-emerald-400">{t('calc.futureGold')}</p>
             <p className="tnum text-lg font-bold text-emerald-700 dark:text-emerald-300">{formatToman(goldFuture)}</p>
-            <p className="text-xs text-emerald-500 dark:text-emerald-500">سود: {formatToman(goldProfit)}</p>
+            <p className="text-xs text-emerald-500 dark:text-emerald-500">{t('calc.profit')}: {formatToman(goldProfit)}</p>
           </div>
         </div>
       </div>
