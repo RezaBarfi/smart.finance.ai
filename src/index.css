@@ -37,6 +37,28 @@
   .label { @apply mb-1.5 block text-sm font-medium text-slate-600; }
   .dark .label { @apply text-slate-400; }
   .chip { @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium; }
+
+  .glass-icon {
+    @apply flex items-center justify-center rounded-xl backdrop-blur-md;
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+  .dark .glass-icon {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+  .glass-icon-brand { background: rgba(51, 142, 255, 0.08); border-color: rgba(51, 142, 255, 0.18); }
+  .dark .glass-icon-brand { background: rgba(51, 142, 255, 0.07); border-color: rgba(51, 142, 255, 0.14); }
+  .glass-icon-emerald { background: rgba(16, 185, 129, 0.08); border-color: rgba(16, 185, 129, 0.18); }
+  .dark .glass-icon-emerald { background: rgba(16, 185, 129, 0.07); border-color: rgba(16, 185, 129, 0.14); }
+  .glass-icon-rose { background: rgba(239, 68, 68, 0.08); border-color: rgba(239, 68, 68, 0.18); }
+  .dark .glass-icon-rose { background: rgba(239, 68, 68, 0.07); border-color: rgba(239, 68, 68, 0.14); }
+  .glass-icon-amber { background: rgba(245, 158, 11, 0.08); border-color: rgba(245, 158, 11, 0.18); }
+  .dark .glass-icon-amber { background: rgba(245, 158, 11, 0.07); border-color: rgba(245, 158, 11, 0.14); }
+  .glass-icon-white { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.2); }
+  .dark .glass-icon-white { background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.1); }
 }
 
 .tnum { font-feature-settings: "tnum"; font-variant-numeric: tabular-nums; }

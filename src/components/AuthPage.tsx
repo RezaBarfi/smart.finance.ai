@@ -68,7 +68,7 @@ export function AuthPage({ forceMode }: { forceMode?: 'reset' }) {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-brand-50/40 to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 p-4">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-600 text-white shadow-lg shadow-brand-600/30">
+          <div className="glass-icon glass-icon-brand mx-auto mb-4 h-14 w-14 text-brand-600 dark:text-brand-400">
             <Wallet size={28} />
           </div>
           <h1 className="text-2xl font-extrabold text-slate-800 dark:text-slate-100">{t('app.title')}</h1>

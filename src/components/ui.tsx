@@ -37,7 +37,7 @@ export function StatCard({ label, value, sub, color, icon }: {
     <div className="card flex flex-col gap-1">
       <div className="flex items-center justify-between">
         <span className="text-sm text-slate-500 dark:text-slate-400">{label}</span>
-        <span className={clsx('flex h-8 w-8 items-center justify-center rounded-lg', color)}>{icon}</span>
+        <span className={clsx('glass-icon h-9 w-9', color)}>{icon}</span>
       </div>
       <span className="tnum text-2xl font-extrabold text-slate-800 dark:text-slate-100">{value}</span>
       {sub && <span className="text-xs text-slate-400 dark:text-slate-500">{sub}</span>}

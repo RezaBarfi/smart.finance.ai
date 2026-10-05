@@ -12,9 +12,9 @@ import * as XLSX from 'xlsx'
 import clsx from 'clsx'
 
 const CAT_META = {
-  invest: { fa: 'سرمایه‌گذاری', en: 'Investment', color: '#10b981', bg: 'bg-emerald-500', soft: 'bg-emerald-50 text-emerald-700', darkSoft: 'dark:bg-emerald-950/50 dark:text-emerald-400', icon: TrendingUp },
-  expense: { fa: 'هزینه‌ها', en: 'Expenses', color: '#ef4444', bg: 'bg-rose-500', soft: 'bg-rose-50 text-rose-700', darkSoft: 'dark:bg-rose-950/50 dark:text-rose-400', icon: TrendingDown },
-  save: { fa: 'پس‌انداز', en: 'Savings', color: '#f59e0b', bg: 'bg-amber-500', soft: 'bg-amber-50 text-amber-700', darkSoft: 'dark:bg-amber-950/50 dark:text-amber-400', icon: PiggyBank },
+  invest: { fa: 'سرمایه‌گذاری', en: 'Investment', color: '#10b981', bg: 'bg-emerald-500', tint: 'glass-icon-emerald text-emerald-600 dark:text-emerald-400', icon: TrendingUp },
+  expense: { fa: 'هزینه‌ها', en: 'Expenses', color: '#ef4444', bg: 'bg-rose-500', tint: 'glass-icon-rose text-rose-600 dark:text-rose-400', icon: TrendingDown },
+  save: { fa: 'پس‌انداز', en: 'Savings', color: '#f59e0b', bg: 'bg-amber-500', tint: 'glass-icon-amber text-amber-600 dark:text-amber-400', icon: PiggyBank },
 } as const
 
 type CatKey = keyof typeof CAT_META
@@ -133,7 +133,7 @@ export function Dashboard() {
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/80">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white"><Wallet size={20} /></div>
+            <div className="glass-icon glass-icon-brand h-9 w-9 text-brand-600 dark:text-brand-400"><Wallet size={20} /></div>
             <div>
               <h1 className="text-base font-bold text-slate-800 dark:text-slate-100">{t('app.title')}</h1>
               <p className="text-xs text-slate-400 dark:text-slate-500">{auth.user?.email}</p>
@@ -167,10 +167,10 @@ export function Dashboard() {
           </div>
 
           <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard label={t('dash.monthIncome')} value={formatToman(f.income)} sub={monthLabel(f.selYear, f.selMonth)} color="bg-brand-50 text-brand-600 dark:bg-brand-950/50 dark:text-brand-400" icon={<Wallet size={16}/>} />
-            <StatCard label={t('dash.netWorth')} value={formatToman(totals.netWorth)} sub={t('dash.cumulativeAll')} color="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400" icon={<TrendingUp size={16}/>} />
-            <StatCard label={t('dash.totalExpense')} value={formatToman(totals.totalExpense)} sub={t('dash.cumulative')} color="bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400" icon={<TrendingDown size={16}/>} />
-            <StatCard label={t('dash.totalSave')} value={formatToman(totals.totalSave)} sub={t('dash.cumulative')} color="bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400" icon={<PiggyBank size={16}/>} />
+            <StatCard label={t('dash.monthIncome')} value={formatToman(f.income)} sub={monthLabel(f.selYear, f.selMonth)} color="glass-icon-brand text-brand-600 dark:text-brand-400" icon={<Wallet size={16}/>} />
+            <StatCard label={t('dash.netWorth')} value={formatToman(totals.netWorth)} sub={t('dash.cumulativeAll')} color="glass-icon-emerald text-emerald-600 dark:text-emerald-400" icon={<TrendingUp size={16}/>} />
+            <StatCard label={t('dash.totalExpense')} value={formatToman(totals.totalExpense)} sub={t('dash.cumulative')} color="glass-icon-rose text-rose-600 dark:text-rose-400" icon={<TrendingDown size={16}/>} />
+            <StatCard label={t('dash.totalSave')} value={formatToman(totals.totalSave)} sub={t('dash.cumulative')} color="glass-icon-amber text-amber-600 dark:text-amber-400" icon={<PiggyBank size={16}/>} />
           </div>
 
           <div className="mt-4 flex gap-2">
@@ -215,7 +215,7 @@ export function Dashboard() {
           </section>
         ) : (
           <section className="card flex flex-col items-center justify-center py-12 text-center animate-fade-in">
-            <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-950/50 dark:text-brand-400"><Wallet size={28}/></div>
+            <div className="glass-icon glass-icon-brand mb-3 h-14 w-14 text-brand-600 dark:text-brand-400"><Wallet size={28}/></div>
             <h3 className="text-lg font-bold text-slate-700 dark:text-slate-200">{t('dash.emptyTitle')}</h3>
             <p className="mt-1 max-w-sm text-sm text-slate-500 dark:text-slate-400">{t('dash.emptyDesc')}</p>
             <button onClick={()=>setIncomeModal(true)} className="btn-primary mt-4"><Plus size={16}/> {t('dash.addIncome')}</button>
@@ -287,7 +287,7 @@ export function Dashboard() {
                 {f.entries.map(e => (
                   <div key={e.id} className="flex items-center justify-between rounded-xl border border-slate-100 px-4 py-3 dark:border-slate-800">
                     <div className="flex items-center gap-3">
-                      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 text-brand-600 dark:bg-brand-950/50 dark:text-brand-400"><Wallet size={18}/></span>
+                      <span className="glass-icon glass-icon-brand h-9 w-9 text-brand-600 dark:text-brand-400"><Wallet size={18}/></span>
                       <div>
                         <p className="tnum text-sm font-bold text-slate-700 dark:text-slate-200">{formatToman(Number(e.amount))} ت</p>
                         <p className="text-xs text-slate-400 dark:text-slate-500">{gregorianToJalaliString(e.income_date)}</p>
@@ -323,7 +323,7 @@ export function Dashboard() {
                   return (
                     <div key={tx.id} className="flex items-center justify-between rounded-xl border border-slate-100 px-4 py-3 transition-colors hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/50">
                       <div className="flex items-center gap-3">
-                        <span className={clsx('flex h-9 w-9 items-center justify-center rounded-lg', meta.soft, meta.darkSoft)}><Icon size={18}/></span>
+                        <span className={clsx('glass-icon h-9 w-9', meta.tint)}><Icon size={18}/></span>
                         <div>
                           <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{tx.sub_type ?? label}</p>
                           {tx.note && <p className="text-xs text-slate-400 dark:text-slate-500">{tx.note}</p>}
@@ -377,7 +377,7 @@ function BudgetCard({ cat, catLabelText, f, onAdd, t }: {
   return (
     <div className="card flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <span className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200"><Icon size={18} className={clsx(meta.soft.split(' ')[1], meta.darkSoft)} />{catLabelText}</span>
+        <span className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200"><span className={clsx('glass-icon h-7 w-7', meta.tint)}><Icon size={15}/></span>{catLabelText}</span>
         <span className="chip bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">{toFaDigits(pct)}٪</span>
       </div>
       <div>
@@ -668,7 +668,7 @@ function SettingsModal({ open, onClose, onExport, monthsCount, txsCount, entries
 
         <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-950/50 dark:text-brand-400">
+            <span className="glass-icon glass-icon-brand h-10 w-10 text-brand-600 dark:text-brand-400">
               <Globe size={20} />
             </span>
             <div className="flex-1">
@@ -690,7 +690,7 @@ function SettingsModal({ open, onClose, onExport, monthsCount, txsCount, entries
 
         <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400">
+            <span className="glass-icon glass-icon-amber h-10 w-10 text-amber-600 dark:text-amber-400">
               <KeyRound size={20} />
             </span>
             <div className="flex-1">
@@ -720,7 +720,7 @@ function SettingsModal({ open, onClose, onExport, monthsCount, txsCount, entries
 
         <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400">
+            <span className="glass-icon glass-icon-emerald h-10 w-10 text-emerald-600 dark:text-emerald-400">
               <FileSpreadsheet size={20} />
             </span>
             <div className="flex-1">
