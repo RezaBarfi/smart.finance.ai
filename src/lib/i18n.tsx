@@ -6,7 +6,7 @@ type Dict = Record<string, string>
 
 const fa: Dict = {
   // App
-  'app.title': 'هوش دفتر مالی من',
+  'app.title': 'حسابینو AI',
   'app.subtitle': 'مدیریت درآمد، هزینه، پس‌انداز و سرمایه‌گذاری',
 
   // Auth
@@ -129,7 +129,7 @@ const fa: Dict = {
   'settings.pwdSuccess': 'رمز عبور با موفقیت تغییر کرد.',
   'settings.pwdMismatch': 'رمز عبور و تکرار آن یکسان نیستند.',
   'settings.pwdError': 'خطا در تغییر رمز عبور. لطفاً دوباره تلاش کنید.',
-  'settings.about': 'هوش دفتر مالی من',
+  'settings.about': 'حسابینو AI',
   'settings.aboutDesc': 'برای تغییر درصد تخصیص هر ماه، از دکمه «ثبت درآمد جدید» استفاده کنید.',
 
   // Compound calculator
@@ -144,7 +144,7 @@ const fa: Dict = {
 }
 
 const en: Dict = {
-  'app.title': 'My Smart Finance Ledger',
+  'app.title': 'Hesabino AI',
   'app.subtitle': 'Manage income, expenses, savings and investments',
 
   'auth.signin': 'Sign In',
@@ -255,7 +255,7 @@ const en: Dict = {
   'settings.pwdSuccess': 'Password changed successfully.',
   'settings.pwdMismatch': 'Passwords do not match.',
   'settings.pwdError': 'Error changing password. Please try again.',
-  'settings.about': 'My Smart Finance Ledger',
+  'settings.about': 'Hesabino AI',
   'settings.aboutDesc': 'Use "Add New Income" to change allocation percentages each month.',
 
   'calc.principal': 'Savings Principal (Toman)',
